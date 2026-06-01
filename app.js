@@ -764,6 +764,106 @@ function renderPlanSupplements() {
     </div>`;
 }
 
+// ── Render: Settings ─────────────────────────────────────────────────────────
+function renderSettings() {
+  const el = $('screen-settings');
+  const hasKey = !!window.ANTHROPIC_API_KEY;
+
+  el.innerHTML = `
+    <div class="screen-header">
+      <div class="screen-title">Settings</div>
+      <div class="screen-subtitle">Configure your trainer app</div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">AI Coach</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-row-icon" style="background:var(--orange-dim)">🤖</div>
+          <div class="settings-row-info">
+            <div class="settings-row-title">Anthropic API Key</div>
+            <div class="settings-row-sub">Powers the live AI chat with Claude</div>
+          </div>
+          <div class="key-status ${hasKey ? 'set' : 'unset'}">
+            ${hasKey ? '✓ Set' : '! Missing'}
+          </div>
+        </div>
+        <div style="padding:14px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Paste your key below — stored only on this device (localStorage)</div>
+          <div class="api-key-input-wrap">
+            <input class="api-key-input" type="password" id="api-key-field"
+              placeholder="sk-ant-api03-..."
+              value="${window.ANTHROPIC_API_KEY || ''}">
+            <button class="api-key-toggle" onclick="toggleKeyVisibility()" id="key-toggle-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <button class="settings-save-btn" onclick="saveApiKey()">Save & Activate</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Your Profile</div>
+      <div class="settings-card">
+        ${[
+          { icon: '👤', title: 'Rishit', sub: '22–24 · Hyderabad, India' },
+          { icon: '⚖️', title: 'Starting Weight', sub: '120 kg → Goal: 90 kg' },
+          { icon: '📅', title: 'Training Days', sub: '6 days/week · 7 PM sessions' },
+          { icon: '🎯', title: 'Daily Targets', sub: '2050 kcal · 180g protein · 190g carbs · 64g fat' },
+        ].map(r => `
+          <div class="settings-row">
+            <div class="settings-row-icon" style="background:var(--bg2)">${r.icon}</div>
+            <div class="settings-row-info">
+              <div class="settings-row-title">${r.title}</div>
+              <div class="settings-row-sub">${r.sub}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">App</div>
+      <div class="settings-card">
+        <div class="settings-row" style="cursor:pointer" onclick="if(confirm('Reset all logged data?')){localStorage.clear();window.ANTHROPIC_API_KEY='';renderSettings();}">
+          <div class="settings-row-icon" style="background:rgba(239,68,68,0.15)">🗑️</div>
+          <div class="settings-row-info">
+            <div class="settings-row-title" style="color:#ef4444">Reset App Data</div>
+            <div class="settings-row-sub">Clears all local data including API key</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:0 16px 20px;text-align:center;font-size:11px;color:var(--text3)">
+      FitTracker · Built for Rishit · Powered by Claude
+    </div>
+
+    <div class="settings-toast" id="settings-toast">✓ API key saved — chat is ready!</div>`;
+}
+
+function toggleKeyVisibility() {
+  const field = $('api-key-field');
+  if (!field) return;
+  field.type = field.type === 'password' ? 'text' : 'password';
+}
+
+function saveApiKey() {
+  const field = $('api-key-field');
+  const key = field?.value.trim();
+  if (!key) return;
+  localStorage.setItem('anthropic_key', key);
+  window.ANTHROPIC_API_KEY = key;
+  // Show toast
+  const toast = $('settings-toast');
+  if (toast) {
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+  // Re-render to update status badge
+  setTimeout(renderSettings, 300);
+}
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 const renders = {
   dashboard: renderDashboard,
@@ -772,6 +872,7 @@ const renders = {
   progress: renderProgress,
   chat: renderChat,
   plan: renderPlan,
+  settings: renderSettings,
 };
 
 document.querySelectorAll('.nav-item').forEach(btn => {
